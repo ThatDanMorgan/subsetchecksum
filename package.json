@@ -1,0 +1,16 @@
+{
+  "name": "subsetchecksum",
+  "version": "1.0.0",
+  "description": "Create a deterministic checksum from a selected subset of object paths.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "checksum",
+    "hash",
+    "object",
+    "subset"
+  ],
+  "license": "MIT"
+}
