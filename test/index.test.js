@@ -347,3 +347,122 @@ test('auto-generated keys can include Date and plain object leaves', () => {
 
   assert.equal(fromEmpty, fromExplicit);
 });
+
+test('supports key mapping object to rename source fields in checksum payload', () => {
+  const input = {
+    fullname: 'Jack Smith',
+    emailaddress: 'foo@bar.com',
+  };
+  const mapping = {
+    formalname: 'name',
+    fullname: 'name',
+    emailaddress: 'email',
+  };
+
+  const actual = subsetChecksum(input, mapping);
+  const expected = hashSubset({
+    email: 'foo@bar.com',
+    name: 'Jack Smith',
+  });
+
+  assert.equal(actual, expected);
+});
+
+test('supports mapping object with deep source paths and custom output keys', () => {
+  const input = {
+    profile: {
+      user: {
+        name: 'Jack Smith',
+      },
+      contacts: {
+        primary: {
+          email: 'foo@bar.com',
+        },
+      },
+    },
+  };
+  const mapping = {
+    'profile.user.name': 'name',
+    'profile.contacts.primary.email': 'email',
+  };
+
+  const actual = subsetChecksum(input, mapping);
+  const expected = hashSubset({
+    email: 'foo@bar.com',
+    name: 'Jack Smith',
+  });
+
+  assert.equal(actual, expected);
+});
+
+test('mapping object preserves insertion-order precedence when multiple sources target one key', () => {
+  const input = {
+    formalname: 'Jonathan Smith',
+    fullname: 'Jack Smith',
+  };
+  const mapping = {
+    fullname: 'name',
+    formalname: 'name',
+  };
+
+  const actual = subsetChecksum(input, mapping);
+  const expected = hashSubset({
+    name: 'Jonathan Smith',
+  });
+
+  assert.equal(actual, expected);
+});
+
+test('mapping object skips missing source paths but includes explicit undefined as null', () => {
+  const input = {
+    presentUndefined: undefined,
+    existing: 'yes',
+  };
+  const mapping = {
+    missing: 'missingRenamed',
+    presentUndefined: 'definedButUndefined',
+    existing: 'existingRenamed',
+  };
+
+  const actual = subsetChecksum(input, mapping);
+  const expected = hashSubset({
+    definedButUndefined: null,
+    existingRenamed: 'yes',
+  });
+
+  assert.equal(actual, expected);
+});
+
+test('supports unusual characters in both source and destination mapping keys', () => {
+  const input = {
+    weird: {
+      'source/key': {
+        'with space': 7,
+      },
+    },
+  };
+  const mapping = {
+    'weird.source/key.with space': 'output:key/with space',
+  };
+
+  const actual = subsetChecksum(input, mapping);
+  const expected = hashSubset({
+    'output:key/with space': 7,
+  });
+
+  assert.equal(actual, expected);
+});
+
+test('empty mapping object falls back to auto-generated key paths', () => {
+  const input = {
+    a: {
+      b: 1,
+    },
+    c: 'value',
+  };
+
+  const fromEmptyMapping = subsetChecksum(input, {});
+  const fromAutoArray = subsetChecksum(input, []);
+
+  assert.equal(fromEmptyMapping, fromAutoArray);
+});

@@ -19,3 +19,5 @@ Implement subset checksum utility with deterministic hashing, tests, and documen
 ## Follow-up Expansion
 - Expanded tests to cover long/deep keys, unusual key characters, duplicate keys, missing/undefined/null path handling, Date values, array differences, and cross-object determinism.
 - Added deterministic object-value serialization so semantically equal object fields hash the same regardless of insertion order.
+- Added support for key mapping objects (`sourcePath -> saveKey`) while keeping array mode intact.
+- In mapping mode, missing source paths are skipped so alias mappings can target one output key safely.

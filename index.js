@@ -10,14 +10,31 @@ function isObject(value) {
 }
 
 /**
- * Resolves a nested value by dot-path.
+ * Checks if a value is a plain object.
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function isPlainObject(value) {
+  if (!isObject(value) || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+/**
+ * Resolves a nested value by dot-path and reports if path exists.
  * @param {Record<string, unknown>} source
  * @param {string} path
- * @returns {unknown}
+ * @returns {{ found: boolean, value: unknown }}
  */
-function getValueByPath(source, path) {
+function getPathResult(source, path) {
   if (!path) {
-    return source;
+    return {
+      found: true,
+      value: source,
+    };
   }
 
   const segments = path.split('.');
@@ -25,13 +42,19 @@ function getValueByPath(source, path) {
 
   for (const segment of segments) {
     if (!isObject(current) || !(segment in current)) {
-      return undefined;
+      return {
+        found: false,
+        value: undefined,
+      };
     }
 
     current = current[segment];
   }
 
-  return current;
+  return {
+    found: true,
+    value: current,
+  };
 }
 
 /**
@@ -149,9 +172,51 @@ function sortObjectByKey(source) {
 }
 
 /**
+ * Builds a subset using direct key paths.
+ * @param {Record<string, unknown>} source
+ * @param {string[]} selectedKeys
+ * @returns {Record<string, unknown>}
+ */
+function buildSubsetFromArrayKeys(source, selectedKeys) {
+  const subset = {};
+
+  for (const key of selectedKeys) {
+    const { value } = getPathResult(source, key);
+    subset[key] = normalizeSubsetValue(value, key);
+  }
+
+  return subset;
+}
+
+/**
+ * Builds a subset using source-to-target key mappings.
+ * @param {Record<string, unknown>} source
+ * @param {Record<string, string>} keyMap
+ * @returns {Record<string, unknown>}
+ */
+function buildSubsetFromKeyMap(source, keyMap) {
+  const subset = {};
+
+  for (const sourceKey of Object.keys(keyMap)) {
+    const targetKey = keyMap[sourceKey];
+    const { found, value } = getPathResult(source, sourceKey);
+
+    // In mapping mode, skip truly missing paths. This allows aliases to map
+    // to the same destination key without missing values overwriting matches.
+    if (!found) {
+      continue;
+    }
+
+    subset[targetKey] = normalizeSubsetValue(value, sourceKey);
+  }
+
+  return subset;
+}
+
+/**
  * Creates a deterministic checksum for a subset of object paths.
  * @param {Record<string, unknown> | null} object - Source object.
- * @param {string[]} [keys] - Dot-path keys used to construct the subset.
+ * @param {string[] | Record<string, string>} [keys] - Either an array of dot-path keys or a mapping of sourcePath to output key.
  * @returns {string|null}
  */
 module.exports = function subsetChecksum(object, keys = []) {
@@ -163,12 +228,20 @@ module.exports = function subsetChecksum(object, keys = []) {
     return null;
   }
 
-  const selectedKeys = Array.isArray(keys) && keys.length > 0 ? keys : generateKeyPaths(object);
-  const subset = {};
+  let subset;
 
-  for (const key of selectedKeys) {
-    const value = getValueByPath(object, key);
-    subset[key] = normalizeSubsetValue(value, key);
+  if (Array.isArray(keys)) {
+    const selectedKeys = keys.length > 0 ? keys : generateKeyPaths(object);
+    subset = buildSubsetFromArrayKeys(object, selectedKeys);
+  } else if (isPlainObject(keys)) {
+    const mappingKeys = Object.keys(keys);
+    if (mappingKeys.length === 0) {
+      subset = buildSubsetFromArrayKeys(object, generateKeyPaths(object));
+    } else {
+      subset = buildSubsetFromKeyMap(object, keys);
+    }
+  } else {
+    subset = buildSubsetFromArrayKeys(object, generateKeyPaths(object));
   }
 
   const sortedSubset = sortObjectByKey(subset);
