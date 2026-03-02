@@ -15,3 +15,7 @@ Implement subset checksum utility with deterministic hashing, tests, and documen
 - Add `node:test` coverage first.
 - Implement utility in `index.js`.
 - Update README and package scripts.
+
+## Follow-up Expansion
+- Expanded tests to cover long/deep keys, unusual key characters, duplicate keys, missing/undefined/null path handling, Date values, array differences, and cross-object determinism.
+- Added deterministic object-value serialization so semantically equal object fields hash the same regardless of insertion order.

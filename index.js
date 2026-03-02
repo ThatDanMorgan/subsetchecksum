@@ -68,6 +68,49 @@ function generateKeyPaths(source, prefix = '') {
 }
 
 /**
+ * Converts an object/array tree into a JSON-stable structure by sorting object keys.
+ * Throws on circular references to mirror JSON.stringify behavior.
+ * @param {unknown} value
+ * @param {unknown[]} [ancestors]
+ * @returns {unknown}
+ */
+function toStableJsonValue(value, ancestors = []) {
+  if (!isObject(value)) {
+    return value;
+  }
+
+  if (typeof value.toJSON === 'function') {
+    return toStableJsonValue(value.toJSON(), ancestors);
+  }
+
+  if (ancestors.includes(value)) {
+    throw new TypeError('Converting circular structure to JSON');
+  }
+
+  const nextAncestors = [...ancestors, value];
+
+  if (Array.isArray(value)) {
+    return value.map((item) => toStableJsonValue(item, nextAncestors));
+  }
+
+  const sorted = {};
+  for (const key of Object.keys(value).sort()) {
+    sorted[key] = toStableJsonValue(value[key], nextAncestors);
+  }
+
+  return sorted;
+}
+
+/**
+ * Stringifies a value with deterministic object key ordering.
+ * @param {unknown} value
+ * @returns {string}
+ */
+function stableStringify(value) {
+  return JSON.stringify(toStableJsonValue(value));
+}
+
+/**
  * Converts a subset value into a hash-safe value.
  * @param {unknown} value
  * @param {string} key
@@ -76,7 +119,7 @@ function generateKeyPaths(source, prefix = '') {
 function normalizeSubsetValue(value, key) {
   if (isObject(value)) {
     try {
-      return JSON.stringify(value);
+      return stableStringify(value);
     } catch (error) {
       console.error(`[subsetchecksum] Unable to stringify object at key "${key}":`, error);
       return null;
