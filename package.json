@@ -1,0 +1,38 @@
+{
+  "name": "subsetchecksum",
+  "version": "1.0.0",
+  "description": "Create a deterministic checksum from a selected subset of object paths.",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "prepublishOnly": "npm test"
+  },
+  "keywords": [
+    "checksum",
+    "sha256",
+    "deterministic",
+    "hash",
+    "object",
+    "subset"
+  ],
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThatDanMorgan/subsetchecksum.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ThatDanMorgan/subsetchecksum/issues"
+  },
+  "homepage": "https://github.com/ThatDanMorgan/subsetchecksum#readme",
+  "license": "MIT"
+}
