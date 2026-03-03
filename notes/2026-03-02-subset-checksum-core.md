@@ -21,3 +21,9 @@ Implement subset checksum utility with deterministic hashing, tests, and documen
 - Added deterministic object-value serialization so semantically equal object fields hash the same regardless of insertion order.
 - Added support for key mapping objects (`sourcePath -> saveKey`) while keeping array mode intact.
 - In mapping mode, missing source paths are skipped so alias mappings can target one output key safely.
+
+## Publish Readiness
+- Added npm publish metadata: exports, files allowlist, engines, repository/homepage/bugs links.
+- Added prepublish gate (`prepublishOnly`) to enforce test pass before publishing.
+- Updated README install/import guidance for npm consumers.
+- Verified tarball contents with `npm pack --dry-run` (runtime artifacts only).

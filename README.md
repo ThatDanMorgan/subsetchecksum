@@ -18,7 +18,7 @@ Build a deterministic SHA-256 checksum from a subset of object values.
 ## Install
 
 ```bash
-npm install
+npm install subsetchecksum
 ```
 
 ## Test
@@ -41,6 +41,12 @@ const source = {
 
 const checksum = subsetChecksum(source, ['profile.name', 'id']);
 console.log(checksum);
+```
+
+When installed from npm:
+
+```js
+const subsetChecksum = require('subsetchecksum');
 ```
 
 ### Mapping Mode Example
